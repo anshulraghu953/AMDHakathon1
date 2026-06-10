@@ -1,0 +1,41 @@
+import argparse
+import time
+
+import requests
+
+from common import write_jsonl
+
+
+API_URL = "https://api.fda.gov/drug/event.json"
+
+
+def download(max_records, batch_size, api_key):
+    records = []
+    session = requests.Session()
+    for skip in range(0, max_records, batch_size):
+        params = {"limit": min(batch_size, max_records - skip), "skip": skip}
+        if api_key:
+            params["api_key"] = api_key
+        response = session.get(API_URL, params=params, timeout=60)
+        response.raise_for_status()
+        batch = response.json().get("results", [])
+        if not batch:
+            break
+        records.extend(batch)
+        print(f"Downloaded {len(records)} records")
+        time.sleep(0.25)
+    return records
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--max-records", type=int, default=2000)
+    parser.add_argument("--batch-size", type=int, default=100)
+    parser.add_argument("--api-key")
+    parser.add_argument("--output", default="data/raw/openfda_events.jsonl")
+    args = parser.parse_args()
+    write_jsonl(args.output, download(args.max_records, args.batch_size, args.api_key))
+
+
+if __name__ == "__main__":
+    main()
