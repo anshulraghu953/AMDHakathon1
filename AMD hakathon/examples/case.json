@@ -1,0 +1,15 @@
+{
+  "patient": {
+    "age": 64,
+    "sex": "male"
+  },
+  "suspect_product": "EXAMPLEDRUG",
+  "event": "Patient developed a rash three days after starting treatment.",
+  "seriousness_evidence": "No hospitalization or other seriousness criterion reported.",
+  "label_evidence": null,
+  "chronology": {
+    "time_to_onset": "3 days",
+    "dechallenge": "unknown",
+    "rechallenge": "not done"
+  }
+}

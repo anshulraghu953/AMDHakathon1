@@ -1,0 +1,81 @@
+import json
+from pathlib import Path
+
+
+SYSTEM_PROMPT = """You are a medical review assistant for trained pharmacovigilance reviewers.
+Create a conservative draft assessment using only supplied evidence.
+Never infer causality or labeling status when evidence is absent.
+Return JSON only. A human reviewer must confirm every field."""
+
+
+OUTPUT_SCHEMA = {
+    "type": "object",
+    "required": [
+        "seriousness",
+        "seriousness_criteria",
+        "meddra_suggestions",
+        "labeling_status",
+        "causality",
+        "missing_information",
+        "reviewer_notes",
+    ],
+    "properties": {
+        "seriousness": {"enum": ["serious", "non_serious", "unknown"]},
+        "seriousness_criteria": {
+            "type": "array",
+            "items": {
+                "enum": [
+                    "death",
+                    "life_threatening",
+                    "hospitalization",
+                    "disability",
+                    "congenital_anomaly",
+                    "other_medically_important_condition",
+                ]
+            },
+        },
+        "meddra_suggestions": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["reported_term", "pt_name", "pt_code"],
+                "properties": {
+                    "reported_term": {"type": "string"},
+                    "pt_name": {"type": "string"},
+                    "pt_code": {"type": ["string", "null"]},
+                },
+            },
+        },
+        "labeling_status": {
+            "enum": ["labelled", "unlabelled", "partially_labelled", "not_assessed"]
+        },
+        "causality": {
+            "enum": [
+                "certain",
+                "probable_likely",
+                "possible",
+                "unlikely",
+                "conditional_unclassified",
+                "unassessable",
+            ]
+        },
+        "missing_information": {"type": "array", "items": {"type": "string"}},
+        "reviewer_notes": {"type": "string"},
+    },
+}
+
+
+def read_jsonl(path):
+    with Path(path).open(encoding="utf-8") as handle:
+        for line in handle:
+            if line.strip():
+                yield json.loads(line)
+
+
+def write_jsonl(path, records):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as handle:
+        for record in records:
+            handle.write(json.dumps(record, ensure_ascii=True) + "\n")
+
